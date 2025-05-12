@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "913039890809",
+    "project_id": "projecte-cozynest",
+    "storage_bucket": "projecte-cozynest.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913039890809:android:cc6800bf1e32aa5608f7a8",
+        "android_client_info": {
+          "package_name": "institut.montilivi.projectecozynest"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "913039890809-6cm1fh195jsd276ooglcbhke36jmuprq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "institut.montilivi.projectecozynest",
+            "certificate_hash": "f1c87733a647c15b958f2ddf7606e301540dcb6b"
+          }
+        },
+        {
+          "client_id": "913039890809-o2d4h2okqai1dpepokrc9rmdlj3ts878.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0YFcqTwW07JkmbAeJFZ9oqPvKu3MNe44"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "913039890809-o2d4h2okqai1dpepokrc9rmdlj3ts878.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
