@@ -266,4 +266,83 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
         }
         return Resposta.Exit(!consultaBuida)
     }
+
+    override suspend fun bloquejaUsuari(idUsuariQueBloqueja: String, idUsuariBloquejat: String): Resposta<Boolean> {
+        return try {
+            val refBloquejos = db.firestoreDB.collection(db.BLOQUEJOS)
+            
+            // Verificar si ya existe el bloqueo
+            val consulta = refBloquejos
+                .whereEqualTo("idUsuariQueBloqueja", idUsuariQueBloqueja)
+                .whereEqualTo("idUsuariBloquejat", idUsuariBloquejat)
+                .get()
+                .await()
+
+            if (consulta.documents.isNotEmpty()) {
+                return Resposta.Exit(true) // Ya está bloqueado
+            }
+
+            // Crear nuevo bloqueo
+            val bloqueig = mapOf(
+                "idUsuariQueBloqueja" to idUsuariQueBloqueja,
+                "idUsuariBloquejat" to idUsuariBloquejat,
+                "dataBloqueig" to com.google.firebase.Timestamp.now()
+            )
+
+            refBloquejos.add(bloqueig).await()
+            Resposta.Exit(true)
+        } catch (e: Exception) {
+            Resposta.Fracas(e.message ?: "Error al bloquejar l'usuari")
+        }
+    }
+
+    override suspend fun desbloquejaUsuari(idUsuariQueDesbloqueja: String, idUsuariDesbloquejat: String): Resposta<Boolean> {
+        return try {
+            val refBloquejos = db.firestoreDB.collection(db.BLOQUEJOS)
+            
+            // Buscar el documento del bloqueo
+            val consulta = refBloquejos
+                .whereEqualTo("idUsuariQueBloqueja", idUsuariQueDesbloqueja)
+                .whereEqualTo("idUsuariBloquejat", idUsuariDesbloquejat)
+                .get()
+                .await()
+
+            if (consulta.documents.isEmpty()) {
+                return Resposta.Exit(true) // No estaba bloqueado
+            }
+
+            // Eliminar el bloqueo
+            for (document in consulta.documents) {
+                document.reference.delete().await()
+            }
+
+            Resposta.Exit(true)
+        } catch (e: Exception) {
+            Resposta.Fracas(e.message ?: "Error al desbloquejar l'usuari")
+        }
+    }
+
+    override suspend fun estaBloquejat(idUsuariQueComprova: String, idUsuariAComprovar: String): Resposta<Boolean> {
+        return try {
+            val refBloquejos = db.firestoreDB.collection(db.BLOQUEJOS)
+            
+            // Buscar si existe un bloqueo en cualquier dirección
+            val consulta1 = refBloquejos
+                .whereEqualTo("idUsuariQueBloqueja", idUsuariQueComprova)
+                .whereEqualTo("idUsuariBloquejat", idUsuariAComprovar)
+                .get()
+                .await()
+
+            val consulta2 = refBloquejos
+                .whereEqualTo("idUsuariQueBloqueja", idUsuariAComprovar)
+                .whereEqualTo("idUsuariBloquejat", idUsuariQueComprova)
+                .get()
+                .await()
+
+            // Si existe un bloqueo en cualquier dirección, devolver true
+            Resposta.Exit(consulta1.documents.isNotEmpty() || consulta2.documents.isNotEmpty())
+        } catch (e: Exception) {
+            Resposta.Fracas(e.message ?: "Error al comprovar si l'usuari està bloquejat")
+        }
+    }
 }

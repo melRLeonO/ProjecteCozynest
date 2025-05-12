@@ -9,4 +9,7 @@ interface UsuarisDAO {
     suspend fun modificaUsuari(usuari: UsuariBase): Resposta<Boolean>
     suspend fun existeixUsuari(correu: String): Resposta<Boolean>
     suspend fun obtenUsuari(id:String): Resposta<UsuariBase>
+    suspend fun bloquejaUsuari(idUsuariQueBloqueja: String, idUsuariBloquejat: String): Resposta<Boolean>
+    suspend fun desbloquejaUsuari(idUsuariQueDesbloqueja: String, idUsuariDesbloquejat: String): Resposta<Boolean>
+    suspend fun estaBloquejat(idUsuariQueComprova: String, idUsuariAComprovar: String): Resposta<Boolean>
 }

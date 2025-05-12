@@ -31,6 +31,3 @@ object DestinacioConversa
 
 @Serializable
 object DestinacioPantallaPerfilChat
-
-@Serializable
-object DestinacioContracteDigital

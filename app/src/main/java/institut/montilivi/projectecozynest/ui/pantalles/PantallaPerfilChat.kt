@@ -29,17 +29,29 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.navigation.NavController
-import institut.montilivi.projectecozynest.navegacio.DestinacioContracteDigital
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import institut.montilivi.projectecozynest.navegacio.DestinacioPantallaMissatges
+import institut.montilivi.projectecozynest.ui.viewmodels.ViewModelPerfilChat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaPerfilChat(navController: NavController) {
     val usuari = UsuariActual.usuari
+    val viewModel: ViewModelPerfilChat = viewModel()
+    val estaBloquejat by viewModel.estaBloquejat.collectAsState()
+
+    // Comprobar si el usuario está bloqueado cuando se carga la pantalla
+    LaunchedEffect(usuari?.id) {
+        usuari?.id?.let { viewModel.comprovaBloqueig(it) }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { /* Sin título, solo flecha */ },
+                title = { },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -90,17 +102,19 @@ fun PantallaPerfilChat(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                Button(onClick = { /* acció de bloqueig */ }) {
-                    Text("Bloquejar")
+                Button(
+                    onClick = {
+                        if (!estaBloquejat) {
+                            viewModel.bloquejaUsuari(u.id)
+                                navController.navigate(DestinacioPantallaMissatges)
+
+                        }
+                    },
+                    enabled = !estaBloquejat
+                ) {
+                    Text(if (estaBloquejat) "Bloquejat" else "Bloquejar")
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(onClick = {
-                    navController.navigate(DestinacioContracteDigital)
-                }) {
-                    Text("Sol·licita generar un contracte digital")
-                }
             } ?: run {
                 Text(text = "Usuari desconegut", style = MaterialTheme.typography.headlineMedium)
             }

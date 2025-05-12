@@ -25,12 +25,10 @@ class ManegadorAutentificacio(private val context: Context) {
     private val autentificacio: FirebaseAuth by lazy {
         Firebase.auth
     }
-    //region Inici de sessió amb Google
     private val idClientWeb =
         "913039890809-o2d4h2okqai1dpepokrc9rmdlj3ts878.apps.googleusercontent.com"
     private val tag = "MANEGADOR_AUTENTIFICACIO"
     private val manegadorDeCredencials = CredentialManager.create(context)
-    //endregion
 
     fun obtenUsuariActual(): FirebaseUser? {
         return autentificacio.currentUser

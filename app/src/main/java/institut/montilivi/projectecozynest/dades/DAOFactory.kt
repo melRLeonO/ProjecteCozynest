@@ -27,9 +27,4 @@ object DAOFactory {
             TipusBBDD.FIREBASE -> MissatgesDAOFirebaseImpl(ManegadorFirestore())
         }
     }
-    fun obtenContractesDAO(context: Context?, tipusBBDD: TipusBBDD):ContractesDAO{
-        return when(tipusBBDD){
-            TipusBBDD.FIREBASE -> ContractesDAOFirebaseImpl(ManegadorFirestore())
-        }
-    }
 }

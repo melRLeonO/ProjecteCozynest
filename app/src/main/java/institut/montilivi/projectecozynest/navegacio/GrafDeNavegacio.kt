@@ -14,7 +14,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import institut.montilivi.projectecozynest.autentificacio.ManegadorAutentificacio
 import institut.montilivi.projectecozynest.firestore.ManegadorFirestore
-import institut.montilivi.projectecozynest.ui.pantalles.PantallaContracteDigital
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaConversa
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaDeRegistre
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaEditaDadesBasiques
@@ -26,7 +25,6 @@ import institut.montilivi.projectecozynest.ui.pantalles.PantallaPerfil
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaPerfilChat
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaPrincipal
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaResetContra
-import institut.montilivi.projectecozynest.ui.viewmodels.ViewModelContracteDigital
 import institut.montilivi.projectecozynest.ui.viewmodels.ViewModelDadesPerfil
 import institut.montilivi.projectecozynest.ui.viewmodels.ViewModelEditaPerfil
 import institut.montilivi.projectecozynest.ui.viewmodels.ViewModelValoracions
@@ -49,7 +47,6 @@ fun GrafDeNavegacio(controladorDeNavegacio: NavHostController = rememberNavContr
     val viewModel: ViewModelDadesPerfil = viewModel()
     val viewModelEditaDadesbasiques: ViewModelEditaPerfil = viewModel()
     val viewModelValoracions: ViewModelValoracions = viewModel()
-    val viewModelContracte: ViewModelContracteDigital = viewModel()
 
     LaunchedEffect(manegadorAutentificacio.hiHaUsuariIniciat()) {
         if (manegadorAutentificacio.hiHaUsuariIniciat()) {
@@ -109,10 +106,6 @@ fun GrafDeNavegacio(controladorDeNavegacio: NavHostController = rememberNavContr
 
         composable<DestinacioPantallaPerfilChat> {
             PantallaPerfilChat(controladorDeNavegacio)
-        }
-
-        composable<DestinacioContracteDigital> {
-            PantallaContracteDigital(controladorDeNavegacio, viewModelContracte)
         }
     }
 }

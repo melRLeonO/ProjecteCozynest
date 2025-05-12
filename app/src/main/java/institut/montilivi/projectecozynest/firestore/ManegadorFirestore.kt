@@ -9,6 +9,7 @@ class ManegadorFirestore {
     val CHATS = "Chats"
     val MISSATGES = "Missatges"
     val CONTRACTES = "Contractes"
+    val BLOQUEJOS = "Bloquejos"
     val firestoreDB = FirebaseFirestore.getInstance()
 
     suspend fun haCompletatRegistre(correu: String): Boolean {
