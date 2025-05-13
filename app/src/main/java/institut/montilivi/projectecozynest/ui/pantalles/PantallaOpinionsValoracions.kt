@@ -51,7 +51,8 @@ fun PantallaOpinionsValoracions(navController: NavController, viewModelValoracio
     val usuariActual by viewModelValoracions.usuariActual.collectAsState()
     val correuActual = manegadorAutentificacio.obtenUsuariActual()?.email
     val esAutovaloracio = correuActual == UsuariActual.usuari?.correu
-
+    val error by viewModelValoracions.error.collectAsState()
+    val estaCarregant by viewModelValoracions.estaCarregant.collectAsState()
 
     LaunchedEffect(usuari) {
         usuari?.let {
@@ -100,86 +101,112 @@ fun PantallaOpinionsValoracions(navController: NavController, viewModelValoracio
                         .fillMaxWidth()
                         .padding(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A5472)),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !estaCarregant
                 ) {
                     Text("Deixa la teva ressenya", color = Color.White)
                 }
             }
         },
         content = { padding ->
-            Column(
+            Box(
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize()
-                    .background(Color(0xFFF9F2F8)),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .background(Color(0xFFF9F2F8))
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (usuari != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    ) {
-                        Column {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (error != null) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE0E0))
+                        ) {
                             Text(
-                                text = "${usuari.nom} ${usuari.cognoms}",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            RatingStarsMitjana(puntuacioMitjana = mitjanaPuntuacio)
-                            Text(
-                                text = "${valoracions.size} ressenyes",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
+                                text = error!!,
+                                modifier = Modifier.padding(16.dp),
+                                color = Color.Red
                             )
                         }
+                    }
 
-                        AsyncImage(
-                            model = usuari.fotoPerfil,
-                            contentDescription = "Foto de perfil",
+                    if (estaCarregant) {
+                        CircularProgressIndicator(
                             modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
+                                .size(48.dp)
+                                .padding(16.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    if (usuari != null) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        ) {
+                            Column {
+                                Text(
+                                    text = "${usuari.nom} ${usuari.cognoms}",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                RatingStarsMitjana(puntuacioMitjana = mitjanaPuntuacio)
+                                Text(
+                                    text = "${valoracions.size} ressenyes",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                            }
 
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(valoracions) { valoracio ->
-                            Card(
+                            AsyncImage(
+                                model = usuari.fotoPerfil,
+                                contentDescription = "Foto de perfil",
                                 modifier = Modifier
-                                    .padding(8.dp)
-                                    .fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(4.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    RatingStars(puntuacio = valoracio.puntuacio)
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text("Comentari: ${valoracio.comentari}", style = MaterialTheme.typography.bodyMedium)
-                                    Text("Data: ${valoracio.dataValoracio}", style = MaterialTheme.typography.bodySmall)
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("${valoracio.nomUsuariQueValora} (${valoracio.correuUsuariQueValora})", style = MaterialTheme.typography.bodySmall)
+                                    .size(80.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(valoracions) { valoracio ->
+                                Card(
+                                    modifier = Modifier
+                                        .padding(8.dp)
+                                        .fillMaxWidth(),
+                                    elevation = CardDefaults.cardElevation(4.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        RatingStars(puntuacio = valoracio.puntuacio)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text("Comentari: ${valoracio.comentari}", style = MaterialTheme.typography.bodyMedium)
+                                        Text("Data: ${valoracio.dataValoracio}", style = MaterialTheme.typography.bodySmall)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("${valoracio.nomUsuariQueValora} (${valoracio.correuUsuariQueValora})", style = MaterialTheme.typography.bodySmall)
+                                    }
                                 }
                             }
                         }
+                    } else {
+                        Text("No s'ha seleccionat cap usuari")
                     }
-
-                } else {
-                    Text("No s'ha seleccionat cap usuari")
                 }
 
                 if (mostrarDialog) {
                     DialogDeRessenya(
                         onDismiss = { mostrarDialog = false },
                         onEnviar = { puntuacio, comentari ->
-
                             val usuariValorat = UsuariActual.usuari
-                            val usuariActualLocal = usuariActual  // <- assignació a variable local!
+                            val usuariActualLocal = usuariActual
 
                             if (usuariActualLocal != null && usuariValorat != null) {
                                 viewModelValoracions.afegeixValoracio(
@@ -191,11 +218,11 @@ fun PantallaOpinionsValoracions(navController: NavController, viewModelValoracio
                                     comentari = comentari,
                                     dataValoracio = dataValoracio
                                 )
+                                mostrarDialog = false
                             }
                         }
                     )
                 }
-
             }
         }
     )

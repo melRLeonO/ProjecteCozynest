@@ -85,7 +85,7 @@ fun PantallaIniciDeSessio(
                 value = email,
                 onValueChange = { 
                     email = it
-                    errorMessage = "" // Clear error when user types
+                    errorMessage = ""
                 },
                 label = { Text("correu electrònic") },
                 modifier = Modifier
@@ -173,8 +173,7 @@ fun PantallaIniciDeSessio(
                                         if (usuari != null) {
                                             UsuariActual.usuari = usuari
                                             Log.d("UsuariActual", "Usuari establert després d'iniciar sessió: ${usuari.rol}")
-                                            // Forzar recarga de la pantalla principal
-                                            navController.navigate(DestinacioPantallaPrincipal) {
+                                             navController.navigate(DestinacioPantallaPrincipal) {
                                                 popUpTo(0) // Limpia el backstack
                                             }
                                         } else {
@@ -206,76 +205,6 @@ fun PantallaIniciDeSessio(
                     )
                 } else {
                     Text("Iniciar sessió", color = Color.White)
-                }
-            }
-
-            Button(
-                onClick = {
-                    ambitDeCorrutina.launch {
-                        try {
-                            isLoading = true
-                            errorMessage = ""
-                            
-                            val exit = manegadorAutentificacio.iniciDeSessioAmbGoogle()
-                            if (exit) {
-                                // Verificar si el usuario existe en Firestore
-                                val currentUser = manegadorAutentificacio.obtenUsuariActual()
-                                if (currentUser != null) {
-                                    val firestore = FirebaseFirestore.getInstance()
-                                    val userDoc = firestore.collection("Usuaris")
-                                        .whereEqualTo("correu", currentUser.email)
-                                        .get()
-                                        .await()
-                                    
-                                    if (userDoc.isEmpty) {
-                                        errorMessage = "Usuari no trobat a la base de dades"
-                                        manegadorAutentificacio.tancaSessio()
-                                    } else {
-                                        // Obtener el usuario de Firestore y establecerlo en UsuariActual
-                                        val document = userDoc.documents.first()
-                                        val rol = document.getString("rol")
-                                        val usuari = when (rol) {
-                                            "Estudiant" -> document.toObject(Estudiant::class.java)
-                                            "Persona Gran" -> document.toObject(PersonaGran::class.java)
-                                            else -> document.toObject(UsuariBase::class.java)
-                                        }
-                                        if (usuari != null) {
-                                            UsuariActual.usuari = usuari
-                                            Log.d("UsuariActual", "Usuari establert després d'iniciar sessió amb Google: ${usuari.rol}")
-                                            // Forzar recarga de la pantalla principal
-                                            navController.navigate(DestinacioPantallaPrincipal) {
-                                                popUpTo(0) // Limpia el backstack
-                                            }
-                                        } else {
-                                            errorMessage = "Error al carregar les dades de l'usuari"
-                                            manegadorAutentificacio.tancaSessio()
-                                        }
-                                    }
-                                }
-                            } else {
-                                errorMessage = "Error iniciant sessió amb Google"
-                            }
-                        } catch (e: Exception) {
-                            errorMessage = "Error inesperat: ${e.message}"
-                        } finally {
-                            isLoading = false
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp)
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(Color(0xFF3B5998)),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.height(24.dp)
-                    )
-                } else {
-                    Text("Inicia sessió amb Google", color = Color.White)
                 }
             }
 

@@ -1,6 +1,5 @@
 package institut.montilivi.projectecozynest.ui.pantalles
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -98,19 +97,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Male
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.mutableFloatStateOf
 
 @Composable
 fun PantallaPrincipal(navController: NavController) {
     val viewModel: ViewModelLike = viewModel()
-    Log.d("UsuariActual", "Usuari actual: ${UsuariActual.usuari}")
-    Log.d("UsuariActual", "Usuari actual és PersonaGran: ${UsuariActual.usuari is PersonaGran}")
     var city by remember { mutableStateOf("") }
-    var distance by remember { mutableStateOf(0f) }
-    var ageMin by remember { mutableStateOf(18f) }
-    var ageMax by remember { mutableStateOf(100f) }
+    var distance by remember { mutableFloatStateOf(0f) }
+    var ageMin by remember {mutableFloatStateOf(18f) }
+    var ageMax by remember { mutableFloatStateOf(100f) }
     var selectedGender by remember { mutableStateOf("") }
-    var starsMin by remember { mutableStateOf(0f) }
-    var reviewsMin by remember { mutableStateOf(0f) }
+    var starsMin by remember { mutableFloatStateOf(0f) }
+    var reviewsMin by remember { mutableFloatStateOf(0f) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -398,19 +396,14 @@ fun ContingutPantallaPrincipal(
                                             setUsuariDelMatch(usuari)
                                             setMostrarDialog(true)
                                         } else {
-                                            Log.d(
-                                                "DEBUG",
-                                                "Like ->  ageMin=$ageMin, ageMax=$ageMax, starsMin=$starsMin, valoracionsMin=$reviewsMin"
-                                            )
-
                                             viewModel.obtenirUsuariAleatoriFiltrat(
                                                 genere = selectedGender,
-                                                edatMin = ageMin.toInt(),
-                                                edatMax = ageMax.toInt(),
-                                                numEstrellesMin = starsMin.toInt(),
-                                                numValoracionsMin = reviewsMin.toInt(),
-                                                ciutat = city,  // <-- se pasa aquí
-                                                distanciaMaxima = distance.toInt(),
+                                                edatMin = ageMin,
+                                                edatMax = ageMax,
+                                                numEstrellesMin = starsMin,
+                                                numValoracionsMin = reviewsMin,
+                                                ciutat = city,
+                                                distanciaMaxima = distance,
                                                 selectedLatLng = selectedLatLng
                                             )
 
@@ -420,12 +413,12 @@ fun ContingutPantallaPrincipal(
                                 onDislike = {
                                     viewModel.obtenirUsuariAleatoriFiltrat(
                                         genere = selectedGender,
-                                        edatMin = ageMin.toInt(),
-                                        edatMax = ageMax.toInt(),
-                                        numEstrellesMin = starsMin.toInt(),
-                                        numValoracionsMin = reviewsMin.toInt(),
-                                        ciutat = city,  // <-- se pasa aquí
-                                        distanciaMaxima = distance.toInt(),
+                                        edatMin = ageMin,
+                                        edatMax = ageMax,
+                                        numEstrellesMin = starsMin,
+                                        numValoracionsMin = reviewsMin,
+                                        ciutat = city,
+                                        distanciaMaxima = distance,
                                         selectedLatLng = selectedLatLng
                                     )
                                 },
@@ -509,12 +502,12 @@ fun ContingutPantallaPrincipal(
                         setMostrarDialog(false)
                         viewModel.obtenirUsuariAleatoriFiltrat(
                             genere = selectedGender,
-                            edatMin = ageMin.toInt(),
-                            edatMax = ageMax.toInt(),
-                            numEstrellesMin = starsMin.toInt(),
-                            numValoracionsMin = reviewsMin.toInt(),
-                            ciutat = city,  // <-- se pasa aquí
-                            distanciaMaxima = distance.toInt(),
+                            edatMin = ageMin,
+                            edatMax = ageMax,
+                            numEstrellesMin = starsMin,
+                            numValoracionsMin = reviewsMin,
+                            ciutat = city,
+                            distanciaMaxima = distance,
                             selectedLatLng = selectedLatLng
                         )
 
@@ -530,12 +523,12 @@ fun ContingutPantallaPrincipal(
                             setMostrarDialog(false)
                             viewModel.obtenirUsuariAleatoriFiltrat(
                                 genere = selectedGender,
-                                edatMin = ageMin.toInt(),
-                                edatMax = ageMax.toInt(),
-                                numEstrellesMin = starsMin.toInt(),
-                                numValoracionsMin = reviewsMin.toInt(),
-                                ciutat = city,  // <-- se pasa aquí
-                                distanciaMaxima = distance.toInt(),
+                                edatMin = ageMin,
+                                edatMax = ageMax,
+                                numEstrellesMin = starsMin,
+                                numValoracionsMin = reviewsMin,
+                                ciutat = city,
+                                distanciaMaxima = distance,
                                 selectedLatLng = selectedLatLng
                             )
 
@@ -596,7 +589,6 @@ fun UbicacioAllotjament(
                     }
                     .addOnFailureListener {
                         predictions = emptyList()
-                        Log.e("Places", "Error", it)
                     }
             },
             placeholder = { Text("Ubicació de la propietat") },
@@ -636,8 +628,7 @@ fun UbicacioAllotjament(
                                     predictions = emptyList()
                                     onUbicacioSeleccionada(address, latLng)
                                 }
-                                .addOnFailureListener { exception ->
-                                    Log.e("Places", "Error obtenint detalls del lloc", exception)
+                                .addOnFailureListener {
                                     ubicacioText = prediction.getFullText(null).toString()
                                     predictions = emptyList()
                                     onUbicacioSeleccionada(ubicacioText, null)
@@ -652,11 +643,11 @@ fun UbicacioAllotjament(
 }
 @Composable
 fun UsuariCard(
+    modifier: Modifier = Modifier,
     usuari: UsuariBase,
     onLike: () -> Unit = {},
     onDislike: () -> Unit = {},
     onVerValoracions: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     var mostrarDetalles by remember { mutableStateOf(false) }
 
@@ -672,7 +663,6 @@ fun UsuariCard(
             modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Foto de perfil
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -756,7 +746,7 @@ fun UsuariCard(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 100.dp, max = 300.dp) // ajusta el màxim segons preferències
+                                .heightIn(min = 100.dp, max = 300.dp)
                                 .background(Color(0xFFEDE7F6), RoundedCornerShape(12.dp))
                                 .verticalScroll(rememberScrollState())
                                 .padding(12.dp)
@@ -887,7 +877,6 @@ fun TaulaDisponibilitat(disponibilitat: Map<String, List<Boolean>>) {
         Text("Disponibilitat", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF5E35B1))
         Spacer(Modifier.height(8.dp))
 
-        // Capçalera
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start
@@ -900,7 +889,6 @@ fun TaulaDisponibilitat(disponibilitat: Map<String, List<Boolean>>) {
 
         Spacer(Modifier.height(8.dp))
 
-        // Files per cada dia
         diesSetmana.forEach { dia ->
             Row(
                 modifier = Modifier
@@ -919,7 +907,6 @@ fun TaulaDisponibilitat(disponibilitat: Map<String, List<Boolean>>) {
                                 shape = RoundedCornerShape(4.dp)
                             )
                     )
-                    // Afegim separació entre boxos excepte després de l'últim
                     if (index < valors.lastIndex) {
                         Spacer(modifier = Modifier.width(6.dp))
                     }

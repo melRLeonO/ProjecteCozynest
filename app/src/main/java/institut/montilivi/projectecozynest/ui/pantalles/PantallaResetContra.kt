@@ -1,6 +1,5 @@
 package institut.montilivi.projectecozynest.ui.pantalles
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +42,6 @@ fun PantallaResetContra(
     var email by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     val ambitDeCorrutina = rememberCoroutineScope()
-    val tag = "PANTALLA_RESET_CONTRA"
 
     Box(
         modifier = Modifier
@@ -90,24 +88,18 @@ fun PantallaResetContra(
             Button(
                 onClick = {
                     errorMessage = ""
-                    Log.d(tag, "Botó de restabliment clicat amb correu: $email")
                     ambitDeCorrutina.launch {
                         if (email.isBlank()) {
                             errorMessage = "El correu electrònic no pot estar buit"
-                            Log.e(tag, "Intent fallit: el correu està buit")
                         } else {
                             try {
-                                Log.d(tag, "Intentant enviar correu de restabliment...")
                                 val resposta = manegadorAutentificacio.enviaCorreuDeRestablimentContrasenya(email)
                                 if (resposta is Resposta.Exit) {
-                                    Log.d(tag, "Correu enviat correctament")
                                     navegaAInici()
                                 } else if (resposta is Resposta.Fracas) {
-                                    Log.e(tag, "Error de restabliment: ${resposta.missatgeError}")
                                     errorMessage = "Error en enviar el correu: ${resposta.missatgeError}"
                                 }
                             } catch (e: Exception) {
-                                Log.e(tag, "Excepció inesperada: ${e.message}")
                                 errorMessage = "Error en enviar el correu: ${e.message}"
                             }
                         }
@@ -124,7 +116,6 @@ fun PantallaResetContra(
 
             TextButton(
                 onClick = {
-                    Log.d(tag, "Navegant a pantalla d'inici de sessió")
                     navController.navigate(DestinacioIniciDeSessio)
                 }
             ) {

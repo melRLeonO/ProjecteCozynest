@@ -28,7 +28,6 @@ import institut.montilivi.projectecozynest.ui.pantalles.PantallaResetContra
 import institut.montilivi.projectecozynest.ui.viewmodels.ViewModelDadesPerfil
 import institut.montilivi.projectecozynest.ui.viewmodels.ViewModelEditaPerfil
 import institut.montilivi.projectecozynest.ui.viewmodels.ViewModelValoracions
-import kotlinx.coroutines.launch
 
 @Composable
 fun GrafDeNavegacio(controladorDeNavegacio: NavHostController = rememberNavController()) {

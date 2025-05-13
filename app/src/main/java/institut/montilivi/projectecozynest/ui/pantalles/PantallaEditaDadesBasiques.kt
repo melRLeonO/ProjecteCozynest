@@ -89,7 +89,6 @@ fun PantallaEditaDadesBasiques(
             .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
-        // Tarjeta de perfil editable
         Card(
             modifier = Modifier
                 .padding(16.dp)
@@ -133,37 +132,29 @@ fun PantallaEditaDadesBasiques(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Modificar nombre
                 TextField(
                     value = nom,
                     onValueChange = { nom = it },
                     label = { Text("Nom") },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                 )
-
-                // Modificar apellidos
                 TextField(
                     value = cognoms,
                     onValueChange = { cognoms = it },
                     label = { Text("Cognoms") },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                 )
-
-                // Modificar fecha de nacimiento
                 TextField(
                     value = dataNaixement,
                     onValueChange = { dataNaixement = it },
                     label = { Text("Data Naixement") },
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                 )
-
-                // Modificar género
                 Text(
                     text = "Gènere:",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                 )
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -186,8 +177,6 @@ fun PantallaEditaDadesBasiques(
                         Text("Dona")
                     }
                 }
-
-                // Botón para guardar los cambios
                 Button(
                     onClick = {
                         val usuariModificat = UsuariBase(
@@ -201,7 +190,7 @@ fun PantallaEditaDadesBasiques(
                             rol = usuari?.rol ?: ""
                         )
                         viewModel.modificarDadesUsuari(usuariModificat)
-                        navController.popBackStack()  // Regresar a la pantalla anterior
+                        navController.popBackStack()
                     },
                     modifier = Modifier
                         .fillMaxWidth()

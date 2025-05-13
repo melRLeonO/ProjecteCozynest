@@ -1,5 +1,6 @@
 package institut.montilivi.projectecozynest.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
@@ -20,6 +21,10 @@ class ViewModelValoracions : ViewModel() {
     val usuariActual: StateFlow<UsuariBase?> = _usuariActual.asStateFlow()
     private val _valoracionsUsuari = MutableStateFlow<List<Valoracio>>(emptyList())
     val valoracionsUsuari: StateFlow<List<Valoracio>> = _valoracionsUsuari
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+    private val _estaCarregant = MutableStateFlow(false)
+    val estaCarregant: StateFlow<Boolean> = _estaCarregant.asStateFlow()
 
     init {
         obtenirUsuariActual()
@@ -63,6 +68,9 @@ class ViewModelValoracions : ViewModel() {
         dataValoracio: String
     ) {
         viewModelScope.launch {
+            _estaCarregant.value = true
+            _error.value = null
+            
             val novaValoracio = Valoracio(
                 idUsuariQueValora = idUsuariQueValora,
                 nomUsuariQueValora = nomUsuariQueValora,
@@ -73,14 +81,26 @@ class ViewModelValoracions : ViewModel() {
                 dataValoracio = dataValoracio
             )
 
-            Firebase.firestore.collection("Valoracions")
-                .add(novaValoracio)
-                .addOnSuccessListener { documentReference ->
-                    documentReference.update("idValoracio", documentReference.id)
+            try {
+                val resposta = DAOFactory.obtenValoracionsDAO(null, DAOFactory.TipusBBDD.FIREBASE)
+                    .afegeixValoracio(novaValoracio)
+                
+                when (resposta) {
+                    is Resposta.Exit -> {
+                        // Actualitzar la llista de valoracions
+                        carregaValoracionsPerUsuari(idUsuariValorat)
+                    }
+                    is Resposta.Fracas -> {
+                        _error.value = resposta.missatgeError
+                        Log.e("ViewModelValoracions", "Error afegint valoració: ${resposta.missatgeError}")
+                    }
                 }
-                .addOnFailureListener {
-                    // Manejar errores
-                }
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Error desconegut"
+                Log.e("ViewModelValoracions", "Error afegint valoració: ${e.message}")
+            } finally {
+                _estaCarregant.value = false
+            }
         }
     }
 }

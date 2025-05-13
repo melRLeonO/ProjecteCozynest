@@ -43,7 +43,6 @@ fun PantallaPerfilChat(navController: NavController) {
     val viewModel: ViewModelPerfilChat = viewModel()
     val estaBloquejat by viewModel.estaBloquejat.collectAsState()
 
-    // Comprobar si el usuario está bloqueado cuando se carga la pantalla
     LaunchedEffect(usuari?.id) {
         usuari?.id?.let { viewModel.comprovaBloqueig(it) }
     }

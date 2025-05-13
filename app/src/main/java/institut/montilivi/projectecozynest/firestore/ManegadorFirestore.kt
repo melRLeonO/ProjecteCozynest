@@ -8,7 +8,6 @@ class ManegadorFirestore {
     val VALORACIONS = "Valoracions"
     val CHATS = "Chats"
     val MISSATGES = "Missatges"
-    val CONTRACTES = "Contractes"
     val BLOQUEJOS = "Bloquejos"
     val firestoreDB = FirebaseFirestore.getInstance()
 

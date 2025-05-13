@@ -113,7 +113,6 @@ fun PantallaPerfil(navController: NavController,
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tarjeta de perfil
         Card(
             modifier = Modifier
                 .padding(16.dp)
@@ -164,16 +163,16 @@ fun PantallaPerfil(navController: NavController,
                                 imageVector = Icons.Default.CalendarToday,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
-                                tint = Color(0xFF8A73BE) // o un altre color que t’agradi
+                                tint = Color(0xFF8A73BE)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(usuari.dataNaixement, fontSize = 14.sp)
                             Spacer(modifier = Modifier.width(8.dp))
 
                             val (iconGenere, colorGenere) = when (usuari.genere) {
-                                "Dona" -> Icons.Default.Female to Color(0xFFE91E63) // Rosa
-                                "Home" -> Icons.Default.Male to Color(0xFF42A5F5)   // Blau
-                                else -> Icons.Default.Person to Color.Gray          // Per defecte
+                                "Dona" -> Icons.Default.Female to Color(0xFFE91E63)
+                                "Home" -> Icons.Default.Male to Color(0xFF42A5F5)
+                                else -> Icons.Default.Person to Color.Gray
                             }
 
                             Icon(
@@ -223,7 +222,7 @@ fun PantallaPerfil(navController: NavController,
             onClick = {
                 val usuariActual = manegadorAutentificacio.obtenUsuariActual()
                 if (usuariActual != null && usuari != null) {
-                    UsuariActual.usuari = usuari // estableix l’usuari del perfil com l’usuari recomanat
+                    UsuariActual.usuari = usuari
                     navController.navigate(DestinacioOpinionsValoracions)
                 }
             },
@@ -275,7 +274,6 @@ fun PantallaPerfil(navController: NavController,
                         withContext(Dispatchers.IO) {
                             val reautenticat = manegadorAutentificacio.reautenticaUsuari(correuActual, contrasenyaActual)
                             if (reautenticat is Resposta.Exit) {
-                                val respostaContrasenya = manegadorAutentificacio.actualitzaContrasenya(novaContrasenya)
                                 withContext(Dispatchers.Main) {
                                     Toast.makeText(context, "Contrasenya actualitzada correctament", Toast.LENGTH_SHORT).show()
                                 }
@@ -300,7 +298,6 @@ fun PantallaPerfil(navController: NavController,
                 Text("Actualitzar contrasenya")
             }
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(

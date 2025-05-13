@@ -56,7 +56,6 @@ fun PantallaMissatges(navController: NavController) {
     val llistaChats by viewModel.chats.collectAsState()
     val filtreNom = remember { mutableStateOf("") }
 
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -116,7 +115,7 @@ fun PantallaMissatges(navController: NavController) {
                 )
             }
         },
-        containerColor = Color(0xFFF9F2F8) // Fondo general
+        containerColor = Color(0xFFF9F2F8)
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -264,12 +263,10 @@ fun formatTimestampSmart(timestamp: Timestamp?): String {
 
     return if (calMessage.get(Calendar.YEAR) == calNow.get(Calendar.YEAR)
         && calMessage.get(Calendar.DAY_OF_YEAR) == calNow.get(Calendar.DAY_OF_YEAR)) {
-        // Hoy → mostrar solo hora
         val hourFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         hourFormat.timeZone = TimeZone.getTimeZone("Europe/Madrid")
         hourFormat.format(date)
     } else {
-        // Día anterior o más → solo fecha
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         dateFormat.timeZone = TimeZone.getTimeZone("Europe/Madrid")
         dateFormat.format(date)

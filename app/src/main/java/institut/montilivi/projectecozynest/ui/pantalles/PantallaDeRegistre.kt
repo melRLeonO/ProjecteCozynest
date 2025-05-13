@@ -33,7 +33,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -122,11 +121,9 @@ fun PantallaDeRegistre(
 
     BackHandler {
         if (step.value == 1) {
-            // Solo si cancela en el primer paso, borra el usuario
             FirebaseAuth.getInstance().currentUser?.delete()
             navController.popBackStack()
         } else {
-            // Si está en otro paso, solo retrocede de paso
             step.value = step.value - 1
         }
     }

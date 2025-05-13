@@ -16,10 +16,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AndroidThreeTen.init(this)
-        // Activa edge-to-edge en dispositivos modernos
         enableEdgeToEdge()
 
-        // Inicializa Google Places solo una vez
         if (!Places.isInitialized()) {
             Places.initialize(
                 applicationContext,
@@ -28,7 +26,6 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-        // Solo verificamos si el usuario ha completado el registro si es un usuario nuevo
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
             val firestore = FirebaseFirestore.getInstance()
@@ -36,11 +33,9 @@ class MainActivity : ComponentActivity() {
                 .whereEqualTo("correu", currentUser.email)
                 .get()
                 .addOnSuccessListener { documents ->
-                    // Si no hay documentos y el usuario es nuevo (creado hace menos de 5 minutos)
                     if (documents.isEmpty && currentUser.metadata?.creationTimestamp?.let {
                         System.currentTimeMillis() - it < 5 * 60 * 1000 
                     } == true) {
-                        // Solo eliminamos si es un usuario nuevo que no ha completado el registro
                         currentUser.delete()
                     }
                 }
@@ -48,7 +43,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ProjecteCozynestTheme {
-                // UI principal de tu app
                 GrafDeNavegacio()
             }
         }
