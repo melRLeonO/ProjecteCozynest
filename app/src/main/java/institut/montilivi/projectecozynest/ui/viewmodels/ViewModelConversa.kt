@@ -12,12 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.FirebaseFirestore
 import institut.montilivi.projectecozynest.model.UsuariBase
-import android.util.Log
 import institut.montilivi.projectecozynest.model.Chat
-import institut.montilivi.projectecozynest.model.Estudiant
-import institut.montilivi.projectecozynest.model.PersonaGran
 
 class ViewModelConversa : ViewModel() {
     private val _altreUsuari = MutableStateFlow<UsuariBase?>(null)
@@ -26,6 +22,8 @@ class ViewModelConversa : ViewModel() {
     val usuariActual: StateFlow<UsuariBase?> = _usuariActual.asStateFlow()
 
     private val missatgesDAO = DAOFactory.obtenMissatgesDAO(null, DAOFactory.TipusBBDD.FIREBASE)
+    private val usuarisDAO = DAOFactory.obtenUsuarisDAO(null, DAOFactory.TipusBBDD.FIREBASE)
+    private val chatsDAO = DAOFactory.obtenChatsDAO(null, DAOFactory.TipusBBDD.FIREBASE)
 
     private val _missatges = MutableStateFlow<List<Missatge>>(emptyList())
     val missatges: StateFlow<List<Missatge>> = _missatges.asStateFlow()
@@ -37,59 +35,59 @@ class ViewModelConversa : ViewModel() {
     private fun obtenirUsuariActual() {
         val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
         if (currentUserEmail != null) {
-            FirebaseFirestore.getInstance().collection("Usuaris")
-                .whereEqualTo("correu", currentUserEmail)
-                .get()
-                .addOnSuccessListener { documents ->
-                    val document = documents.firstOrNull()
-                    if (document != null) {
-                        val rol = document.getString("rol")
-                        val usuari = when (rol) {
-                            "Estudiant" -> document.toObject(Estudiant::class.java)
-                            "Persona Gran" -> document.toObject(PersonaGran::class.java)
-                            else -> document.toObject(UsuariBase::class.java)
+            viewModelScope.launch {
+                try {
+                    val resultat = usuarisDAO.obtenUsuariPerCorreu(currentUserEmail)
+                    when (resultat) {
+                        is Resposta.Exit -> {
+                            _usuariActual.value = resultat.dades
                         }
-                        _usuariActual.value = usuari
-                    } else {
-                        _usuariActual.value = null
+                        is Resposta.Fracas -> {
+                            _usuariActual.value = null
+                        }
                     }
-                }
-                .addOnFailureListener {
+                } catch (e: Exception) {
                     _usuariActual.value = null
-                }
-        }
-    }
-    fun carregarMissatges(idChat: String) {
-        Log.d("DEBUG", "Iniciant càrrega de missatges per al chat $idChat")
-        viewModelScope.launch {
-            missatgesDAO.obtenMissatges(idChat).collect { resposta ->
-                if (resposta is Resposta.Exit) {
-                    Log.d("DEBUG", "Missatges rebuts: ${resposta.dades.size}")
-                    _missatges.value = resposta.dades
-
-                    val usuariActualId = _usuariActual.value?.id
-                    if (usuariActualId != null) {
-                        carregarChat(idChat) { chat ->
-                            chat?.let {
-                                val altreId = when (usuariActualId) {
-                                    it.idEstudiant -> it.idPersonaGran
-                                    it.idPersonaGran -> it.idEstudiant
-                                    else -> null
-                                }
-
-                                if (!altreId.isNullOrEmpty()) {
-                                    carregarAltreUsuari(altreId)
-                                }
-                            }
-                        }
-                    }
-                } else if (resposta is Resposta.Fracas) {
-                    Log.e("DEBUG", "Error rebent missatges: ${resposta.missatgeError}")
                 }
             }
         }
     }
 
+    fun carregarMissatges(idChat: String) {
+        viewModelScope.launch {
+            try {
+                missatgesDAO.obtenMissatges(idChat).collect { resposta ->
+                    when (resposta) {
+                        is Resposta.Exit -> {
+                            _missatges.value = resposta.dades
+
+                            val usuariActualId = _usuariActual.value?.id
+                            if (usuariActualId != null) {
+                                carregarChat(idChat) { chat ->
+                                    chat?.let {
+                                        val altreId = when (usuariActualId) {
+                                            it.idEstudiant -> it.idPersonaGran
+                                            it.idPersonaGran -> it.idEstudiant
+                                            else -> null
+                                        }
+
+                                        if (!altreId.isNullOrEmpty()) {
+                                            carregarAltreUsuari(altreId)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        is Resposta.Fracas -> {
+                            // Manejar el error si es necesario
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Manejar la excepción si es necesario
+            }
+        }
+    }
 
     fun enviarMissatge(text: String) {
         val idChat = ChatSeleccionat.idChatSeleccionat ?: return
@@ -103,46 +101,60 @@ class ViewModelConversa : ViewModel() {
         )
 
         viewModelScope.launch {
-            val resultat = missatgesDAO.afegirMissatge(missatge)
-            if (resultat is Resposta.Exit) {
-                // Actualizar el chat con el nuevo lastMessage y timestamp
-                val chatRef = FirebaseFirestore.getInstance().collection("Chats").document(idChat)
-                chatRef.update(
-                    mapOf(
-                        "lastMessage" to missatge.text,
-                        "lastMessageSenderId" to usuari.id, // 👈 Añadir esta línea
-                        "timestamp" to missatge.timestamp
-                    )
-                )
-
+            try {
+                val resultat = missatgesDAO.afegirMissatge(missatge)
+                if (resultat is Resposta.Exit) {
+                    // Obtener el chat actual primero
+                    val chatResultat = chatsDAO.obtenChat(idChat)
+                    if (chatResultat is Resposta.Exit) {
+                        val chatActual = chatResultat.dades
+                        // Actualizar solo los campos necesarios
+                        chatActual.lastMessage = missatge.text
+                        chatActual.lastMessageSenderId = usuari.id
+                        chatActual.timestamp = missatge.timestamp
+                        // Mantener los demás campos intactos
+                        chatsDAO.modificaChat(chatActual)
+                    }
+                }
+            } catch (e: Exception) {
+                // Manejar la excepción si es necesario
             }
         }
     }
 
     fun carregarAltreUsuari(id: String) {
-        FirebaseFirestore.getInstance().collection("Usuaris").document(id)
-            .get()
-            .addOnSuccessListener { document ->
-                val rol = document.getString("rol")
-                val usuari = when (rol) {
-                    "Estudiant" -> document.toObject(Estudiant::class.java)
-                    "Persona Gran" -> document.toObject(PersonaGran::class.java)
-                    else -> document.toObject(UsuariBase::class.java)
+        viewModelScope.launch {
+            try {
+                val resultat = usuarisDAO.obtenUsuari(id)
+                when (resultat) {
+                    is Resposta.Exit -> {
+                        _altreUsuari.value = resultat.dades
+                    }
+                    is Resposta.Fracas -> {
+
+                    }
                 }
-                _altreUsuari.value = usuari
+            } catch (e: Exception) {
+                // Manejar la excepción si es necesario
             }
-    }
-    fun carregarChat(idChat: String, onChatCarregat: (Chat?) -> Unit) {
-        FirebaseFirestore.getInstance().collection("Chats")  // Asegúrate del nombre correcto
-            .document(idChat)
-            .get()
-            .addOnSuccessListener { document ->
-                val chat = document.toObject(Chat::class.java)
-                onChatCarregat(chat)
-            }
-            .addOnFailureListener {
-                onChatCarregat(null)
-            }
+        }
     }
 
+    fun carregarChat(idChat: String, onChatCarregat: (Chat?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resultat = chatsDAO.obtenChat(idChat)
+                when (resultat) {
+                    is Resposta.Exit -> {
+                        onChatCarregat(resultat.dades)
+                    }
+                    is Resposta.Fracas -> {
+                        onChatCarregat(null)
+                    }
+                }
+            } catch (e: Exception) {
+                onChatCarregat(null)
+            }
+        }
+    }
 }

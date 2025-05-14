@@ -27,4 +27,9 @@ object DAOFactory {
             TipusBBDD.FIREBASE -> MissatgesDAOFirebaseImpl(ManegadorFirestore())
         }
     }
+    fun obtenMatchsDAO(context: Context?, tipusBBDD: TipusBBDD): MatchDAO {
+        return when(tipusBBDD) {
+            TipusBBDD.FIREBASE -> MatchDAOFirebaseImpl(ManegadorFirestore())
+        }
+    }
 }

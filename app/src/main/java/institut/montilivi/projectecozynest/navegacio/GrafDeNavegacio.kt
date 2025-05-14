@@ -17,7 +17,6 @@ import institut.montilivi.projectecozynest.firestore.ManegadorFirestore
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaConversa
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaDeRegistre
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaEditaDadesBasiques
-import institut.montilivi.projectecozynest.ui.pantalles.PantallaEditaDadesRegistre
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaIniciDeSessio
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaMissatges
 import institut.montilivi.projectecozynest.ui.pantalles.PantallaOpinionsValoracions
@@ -70,10 +69,6 @@ fun GrafDeNavegacio(controladorDeNavegacio: NavHostController = rememberNavContr
 
         composable<DestinacioDeRegistre> {
             PantallaDeRegistre(manegadorAutentificacio, controladorDeNavegacio, manegadorFirestore)
-        }
-
-        composable<DestinacioEditaDades> {
-            PantallaEditaDadesRegistre()
         }
 
         composable<DestinacioEditaDadesBasiques> {

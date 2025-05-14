@@ -50,7 +50,6 @@ import androidx.compose.material.icons.filled.Male
 import androidx.compose.ui.platform.LocalContext
 import institut.montilivi.projectecozynest.model.Resposta
 import institut.montilivi.projectecozynest.model.UsuariActual
-import institut.montilivi.projectecozynest.navegacio.DestinacioEditaDades
 import institut.montilivi.projectecozynest.navegacio.DestinacioOpinionsValoracions
 import institut.montilivi.projectecozynest.navegacio.DestinacioPantallaMissatges
 import institut.montilivi.projectecozynest.navegacio.DestinacioPerfil
@@ -207,16 +206,6 @@ fun PantallaPerfil(navController: NavController,
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Button(
-            onClick = { navController.navigate(DestinacioEditaDades) },
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .padding(vertical = 6.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A5472)),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("Edita dades registre", color = Color.White)
-        }
 
         Button(
             onClick = {

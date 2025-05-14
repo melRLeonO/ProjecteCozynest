@@ -1,5 +1,6 @@
 package institut.montilivi.projectecozynest.ui.pantalles
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -97,6 +98,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Male
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 
 @Composable
@@ -113,7 +115,7 @@ fun PantallaPrincipal(navController: NavController) {
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     var selectedLatLng by remember { mutableStateOf<LatLng?>(null) }
-
+    val usuariActual by viewModel._usuariActual.collectAsState()
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -129,7 +131,11 @@ fun PantallaPrincipal(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    if (UsuariActual.usuari !is PersonaGran) {
+                    LaunchedEffect(Unit) {
+                        Log.d("DEBUG", "usuariActual = $usuariActual")
+                    }
+
+                    if (usuariActual is Estudiant) {
                         UbicacioAllotjament { address, latLng ->
                             city = address
                             selectedLatLng = latLng
@@ -566,10 +572,8 @@ fun UbicacioAllotjament(
 ) {
     val context = LocalContext.current
     val placesClient = remember { Places.createClient(context) }
-
     var ubicacioText by remember { mutableStateOf("") }
     var predictions by remember { mutableStateOf<List<AutocompletePrediction>>(emptyList()) }
-
     val token = remember { AutocompleteSessionToken.newInstance() }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -577,7 +581,6 @@ fun UbicacioAllotjament(
             value = ubicacioText,
             onValueChange = { text ->
                 ubicacioText = text
-
                 val request = FindAutocompletePredictionsRequest.builder()
                     .setSessionToken(token)
                     .setQuery(text)
@@ -595,10 +598,8 @@ fun UbicacioAllotjament(
             leadingIcon = { Icon(Icons.Default.Place, contentDescription = "Ubicació") },
             modifier = Modifier.fillMaxWidth()
         )
-
         if (predictions.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -614,16 +615,12 @@ fun UbicacioAllotjament(
                         onClick = {
                             val placeId = prediction.placeId
                             val placeFields = listOf(Place.Field.LAT_LNG, Place.Field.ADDRESS)
-
                             val request = FetchPlaceRequest.builder(placeId, placeFields).build()
-
                             placesClient.fetchPlace(request)
                                 .addOnSuccessListener { response ->
                                     val place = response.place
                                     val latLng = place.latLng
-                                    val address =
-                                        place.address ?: prediction.getFullText(null).toString()
-
+                                    val address = place.address ?: prediction.getFullText(null).toString()
                                     ubicacioText = address
                                     predictions = emptyList()
                                     onUbicacioSeleccionada(address, latLng)

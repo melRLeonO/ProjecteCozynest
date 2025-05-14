@@ -75,16 +75,19 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
             }
             Resposta.Exit(usuaris)
         } catch (e: Exception) {
-            Log.e("UserRegistration", "Error obtenint usuaris: ${e.message}")
-            Resposta.Fracas(e.message ?: "Error en obtenir els usuaris")
+            Log.e("UserRegistration", "Error obtaining users: ${e.message}")
+            Resposta.Fracas(e.message ?: "Error obtaining users")
         }
     }
     override suspend fun obtenUsuari(id: String): Resposta<UsuariBase> {
         var usuari: UsuariBase = UsuariBase()
         try {
             val refUsuaris = db.firestoreDB.collection(db.USUARIS)
-            val refUsuari = refUsuaris.document(id)
-            val document = refUsuari.get().await()
+            val document = refUsuaris.document(id).get().await()
+
+            if (!document.exists()) {
+                return Resposta.Fracas("User not found")
+            }
 
             usuari = when (val rol = document.getString("rol")) {
                 "Estudiant" -> document.toObject(Estudiant::class.java) ?: Estudiant()
@@ -92,10 +95,33 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
                 else -> UsuariBase()
             }
         } catch (e: Exception) {
-            return Resposta.Fracas(e.message ?: "Error buscando el usuario $id")
+            return Resposta.Fracas(e.message ?: "Error searching for user $id")
         }
         return Resposta.Exit(usuari)
     }
+
+    override suspend fun obtenUsuariPerCorreu(correu: String): Resposta<UsuariBase> {
+        try {
+            val refUsuaris = db.firestoreDB.collection(db.USUARIS)
+            val documents = refUsuaris.whereEqualTo("correu", correu).get().await().documents
+
+            if (documents.isEmpty()) {
+                return Resposta.Fracas("User not found")
+            }
+
+            val document = documents.first()
+            val usuari = when (val rol = document.getString("rol")) {
+                "Estudiant" -> document.toObject(Estudiant::class.java) ?: Estudiant()
+                "Persona Gran" -> document.toObject(PersonaGran::class.java) ?: PersonaGran()
+                else -> UsuariBase()
+            }
+
+            return Resposta.Exit(usuari)
+        } catch (e: Exception) {
+            return Resposta.Fracas(e.message ?: "Error searching for user with email $correu")
+        }
+    }
+
     override suspend fun afegeixUsuari(usuari: UsuariBase): Resposta<Boolean> {
         return try {
             val refUsuaris = db.firestoreDB.collection(db.USUARIS)
@@ -177,7 +203,7 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
             Resposta.Exit(true)
         } catch (e: Exception) {
             Log.e("UserRegistration", "Error in user registration: ${e.message}")
-            Resposta.Fracas(e.message ?: "Error en alta d'usuari ${usuari.correu}")
+            Resposta.Fracas(e.message ?: "Error in user registration ${usuari.correu}")
         }
     }
     override suspend fun modificaUsuari(usuari: UsuariBase): Resposta<Boolean> {
@@ -250,8 +276,8 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
                 Resposta.Exit(false)
             }
         } catch (e: Exception) {
-            Log.e("UserRegistration", "Error modificant usuari: ${e.message}")
-            Resposta.Fracas(e.message ?: "Error en modificar l'usuari ${usuari.id}")
+            Log.e("UserRegistration", "Error modifying user: ${e.message}")
+            Resposta.Fracas(e.message ?: "Error modifying user ${usuari.id}")
         }
     }
     override suspend fun existeixUsuari(correu: String): Resposta<Boolean> {
@@ -262,7 +288,7 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
             consultaBuida = consulta.get().await().documents.isEmpty()
 
         }catch (e: Exception) {
-            Resposta.Fracas(e.message ?: "Error cercant l'usuari $correu" )
+            Resposta.Fracas(e.message ?: "Error searching for user $correu" )
         }
         return Resposta.Exit(!consultaBuida)
     }
@@ -292,7 +318,7 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
             refBloquejos.add(bloqueig).await()
             Resposta.Exit(true)
         } catch (e: Exception) {
-            Resposta.Fracas(e.message ?: "Error al bloquejar l'usuari")
+            Resposta.Fracas(e.message ?: "Error blocking user")
         }
     }
 
@@ -318,7 +344,7 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
 
             Resposta.Exit(true)
         } catch (e: Exception) {
-            Resposta.Fracas(e.message ?: "Error al desbloquejar l'usuari")
+            Resposta.Fracas(e.message ?: "Error unblocking user")
         }
     }
 
@@ -342,7 +368,50 @@ class UsuarisDAOFirebaseImpl(private val db: ManegadorFirestore) : UsuarisDAO {
             // Si existe un bloqueo en cualquier dirección, devolver true
             Resposta.Exit(consulta1.documents.isNotEmpty() || consulta2.documents.isNotEmpty())
         } catch (e: Exception) {
-            Resposta.Fracas(e.message ?: "Error al comprovar si l'usuari està bloquejat")
+            Resposta.Fracas(e.message ?: "Error checking if user is blocked")
+        }
+    }
+
+    override suspend fun obtenirUsuarisPerNom(nom: String, correuActual: String): Resposta<List<UsuariBase>> {
+        return try {
+            val refUsuaris = db.firestoreDB.collection(db.USUARIS)
+            val refBloquejos = db.firestoreDB.collection(db.BLOQUEJOS)
+            
+            // Primero obtenemos el usuario actual para saber su rol
+            val usuariActualDoc = refUsuaris.whereEqualTo("correu", correuActual).get().await().documents.firstOrNull()
+            val usuariActual = usuariActualDoc?.toObject(UsuariBase::class.java)
+
+            if (usuariActual == null) {
+                return Resposta.Exit(emptyList())
+            }
+
+            val rolOposat = if (usuariActual.rol == "Estudiant") "Persona Gran" else "Estudiant"
+
+            // Obtener todos los bloqueos donde el usuario actual es bloqueador o bloqueado
+            val bloquejosQueFa = refBloquejos.whereEqualTo("idUsuariQueBloqueja", usuariActual.id).get().await().documents
+            val bloquejosQueRep = refBloquejos.whereEqualTo("idUsuariBloquejat", usuariActual.id).get().await().documents
+            val idsBloquejats = bloquejosQueFa.mapNotNull { it.getString("idUsuariBloquejat") }
+            val idsQueEmBloquegen = bloquejosQueRep.mapNotNull { it.getString("idUsuariQueBloqueja") }
+            val idsExclosos = idsBloquejats + idsQueEmBloquegen
+
+            // Obtenemos los usuarios del rol opuesto que coincidan con el nombre
+            val resultats = refUsuaris.whereEqualTo("rol", rolOposat).get().await()
+            
+            val usuaris = resultats.documents.mapNotNull {
+                when (it.getString("rol")) {
+                    "Estudiant" -> it.toObject(Estudiant::class.java)
+                    "Persona Gran" -> it.toObject(PersonaGran::class.java)
+                    else -> null
+                }
+            }.filter { usuari ->
+                usuari.correu != correuActual &&
+                usuari.nom.contains(nom, ignoreCase = true) &&
+                usuari.id !in idsExclosos
+            }
+
+            Resposta.Exit(usuaris)
+        } catch (e: Exception) {
+            Resposta.Fracas(e.message ?: "Error obtaining users by name")
         }
     }
 }

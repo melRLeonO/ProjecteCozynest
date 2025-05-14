@@ -48,4 +48,21 @@ class MissatgesDAOFirebaseImpl(private val db: ManegadorFirestore) : MissatgesDA
         awaitClose { listener?.remove() }
     }
 
+    override suspend fun eliminarMissatgesChat(idChat: String): Resposta<Boolean> {
+        return try {
+            val missatges = db.firestoreDB.collection(db.MISSATGES)
+                .whereEqualTo("idChat", idChat)
+                .get()
+                .await()
+                .documents
+
+            for (missatge in missatges) {
+                missatge.reference.delete().await()
+            }
+            Resposta.Exit(true)
+        } catch (e: Exception) {
+            Resposta.Fracas(e.message ?: "Error eliminant els missatges del chat")
+        }
+    }
+
 }

@@ -92,6 +92,47 @@ class ChatsDAOFirebaseImpl (private val db: ManegadorFirestore) : ChatsDAO {
             return Resposta.Fracas(e.message ?: "Error cercant Chat")
         }
         return Resposta.Exit(chat)
+    }
 
+    override suspend fun crearChat(estudiantId: String, personaGranId: String): Resposta<Boolean> {
+        return try {
+            val matchId = listOf(estudiantId, personaGranId).sorted().joinToString("_")
+            val chatsRef = db.firestoreDB.collection(db.CHATS)
+            
+            // Verificar si ya existe el chat
+            val consulta = chatsRef.whereEqualTo("idMatch", matchId).get().await()
+            if (!consulta.isEmpty) {
+                return Resposta.Exit(true) // El chat ya existe
+            }
+
+            // Crear nuevo chat
+            val docRef = chatsRef.document()
+            val chatData = hashMapOf(
+                "idChat" to docRef.id,
+                "idMatch" to matchId,
+                "idEstudiant" to estudiantId,
+                "idPersonaGran" to personaGranId,
+                "lastMessage" to "",
+                "lastMessageSenderId" to "",
+                "timestamp" to com.google.firebase.Timestamp.now(),
+                "participants" to listOf(estudiantId, personaGranId)
+            )
+            docRef.set(chatData).await()
+            Resposta.Exit(true)
+        } catch (e: Exception) {
+            Resposta.Fracas(e.message ?: "Error creant el chat")
+        }
+    }
+
+    override suspend fun eliminarChat(idChat: String): Resposta<Boolean> {
+        return try {
+            db.firestoreDB.collection(db.CHATS)
+                .document(idChat)
+                .delete()
+                .await()
+            Resposta.Exit(true)
+        } catch (e: Exception) {
+            Resposta.Fracas(e.message ?: "Error eliminant el chat")
+        }
     }
 }

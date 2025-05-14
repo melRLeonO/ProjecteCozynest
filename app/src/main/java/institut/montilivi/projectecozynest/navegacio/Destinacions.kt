@@ -18,9 +18,6 @@ object DestinacioPerfil
 object DestinacioPantallaPrincipal
 
 @Serializable
-object DestinacioEditaDades
-
-@Serializable
 object DestinacioPantallaMissatges
 
 @Serializable

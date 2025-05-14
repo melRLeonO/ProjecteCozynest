@@ -151,7 +151,6 @@ fun PantallaIniciDeSessio(
 
                             when (val resultat = manegadorAutentificacio.iniciarSessioAmbCorreuIContrasenya(email, password)) {
                                 is Resposta.Exit -> {
-                                    // Verificar si el usuario existe en Firestore
                                     val firestore = FirebaseFirestore.getInstance()
                                     val userDoc = firestore.collection("Usuaris")
                                         .whereEqualTo("correu", email)
@@ -162,7 +161,6 @@ fun PantallaIniciDeSessio(
                                         errorMessage = "Usuari no trobat a la base de dades"
                                         manegadorAutentificacio.tancaSessio()
                                     } else {
-                                        // Obtener el usuario de Firestore y establecerlo en UsuariActual
                                         val document = userDoc.documents.first()
                                         val rol = document.getString("rol")
                                         val usuari = when (rol) {
@@ -174,7 +172,7 @@ fun PantallaIniciDeSessio(
                                             UsuariActual.usuari = usuari
                                             Log.d("UsuariActual", "Usuari establert després d'iniciar sessió: ${usuari.rol}")
                                              navController.navigate(DestinacioPantallaPrincipal) {
-                                                popUpTo(0) // Limpia el backstack
+                                                popUpTo(0)
                                             }
                                         } else {
                                             errorMessage = "Error al carregar les dades de l'usuari"

@@ -26,35 +26,61 @@ class ViewModelValoracions : ViewModel() {
     private val _estaCarregant = MutableStateFlow(false)
     val estaCarregant: StateFlow<Boolean> = _estaCarregant.asStateFlow()
 
+    private val usuarisDAO = DAOFactory.obtenUsuarisDAO(null, DAOFactory.TipusBBDD.FIREBASE)
+    private val valoracionsDAO = DAOFactory.obtenValoracionsDAO(null, DAOFactory.TipusBBDD.FIREBASE)
+
     init {
         obtenirUsuariActual()
     }
 
     private fun obtenirUsuariActual() {
         val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
+        Log.d("ViewModelValoracions", "Correu usuari autenticat: $currentUserEmail")
+
         if (currentUserEmail != null) {
-            FirebaseFirestore.getInstance().collection("Usuaris")
-                .whereEqualTo("correu", currentUserEmail)
-                .get()
-                .addOnSuccessListener { documents ->
-                    _usuariActual.value = documents.firstOrNull()?.toObject(UsuariBase::class.java)
-                }
-                .addOnFailureListener {
+            viewModelScope.launch {
+                try {
+                    val resultat = usuarisDAO.obtenUsuariPerCorreu(currentUserEmail)
+                    when (resultat) {
+                        is Resposta.Exit -> {
+                            Log.d("ViewModelValoracions", "Usuari trobat: ${resultat.dades}")
+                            _usuariActual.value = resultat.dades
+                        }
+                        is Resposta.Fracas -> {
+                            Log.e("ViewModelValoracions", "Error obtenint usuari: ${resultat.missatgeError}")
+                            _usuariActual.value = null
+                            _error.value = resultat.missatgeError
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("ViewModelValoracions", "Excepció obtenint usuari: ${e.message}")
                     _usuariActual.value = null
+                    _error.value = e.message
                 }
+            }
+        } else {
+            Log.e("ViewModelValoracions", "Correu de l'usuari és null!")
         }
     }
 
+
     fun carregaValoracionsPerUsuari(idUsuariValorat: String) {
         viewModelScope.launch {
-            DAOFactory.obtenValoracionsDAO(null, DAOFactory.TipusBBDD.FIREBASE)
-                .obtenValoracions()
-                .collect { resposta ->
-                    if (resposta is Resposta.Exit) {
-                        val valoracionsFiltrades = resposta.dades.filter { it.idUsuariValorat == idUsuariValorat }
-                        _valoracionsUsuari.value = valoracionsFiltrades
+            try {
+                valoracionsDAO.obtenValoracions().collect { resposta ->
+                    when (resposta) {
+                        is Resposta.Exit -> {
+                            val valoracionsFiltrades = resposta.dades.filter { it.idUsuariValorat == idUsuariValorat }
+                            _valoracionsUsuari.value = valoracionsFiltrades
+                        }
+                        is Resposta.Fracas -> {
+                            _error.value = resposta.missatgeError
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                _error.value = e.message
+            }
         }
     }
 
@@ -67,6 +93,10 @@ class ViewModelValoracions : ViewModel() {
         comentari: String,
         dataValoracio: String
     ) {
+        Log.d("ViewModelValoracions", "Afegint valoració amb dades:")
+        Log.d("ViewModelValoracions", "Usuari que valora: $idUsuariQueValora, $nomUsuariQueValora, $correuUsuariQueValora")
+        Log.d("ViewModelValoracions", "Usuari valorat: $idUsuariValorat, puntuació: $puntuacio, comentari: $comentari")
+
         viewModelScope.launch {
             _estaCarregant.value = true
             _error.value = null
@@ -82,8 +112,7 @@ class ViewModelValoracions : ViewModel() {
             )
 
             try {
-                val resposta = DAOFactory.obtenValoracionsDAO(null, DAOFactory.TipusBBDD.FIREBASE)
-                    .afegeixValoracio(novaValoracio)
+                val resposta = valoracionsDAO.afegeixValoracio(novaValoracio)
                 
                 when (resposta) {
                     is Resposta.Exit -> {

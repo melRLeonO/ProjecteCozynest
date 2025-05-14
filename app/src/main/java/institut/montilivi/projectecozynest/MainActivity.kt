@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
             Places.initialize(
                 applicationContext,
                 "AIzaSyCWnl96pIyDpbzlLO75bad9KrhomOAfPvg",
-                Locale("ca") // Catalán
+                Locale("ca")
             )
         }
 

@@ -12,7 +12,6 @@ import institut.montilivi.projectecozynest.model.PersonaGran
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import android.util.Log
 
 class ViewModelEditaPerfil : ViewModel() {
     private val _estat = MutableStateFlow(EditaDadesEstat())
@@ -26,10 +25,8 @@ class ViewModelEditaPerfil : ViewModel() {
 
     fun obtenirUsuariActual() {
         val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
-        Log.d("ViewModelEditaPerfil", "Obtenint usuari amb correu: $currentUserEmail")
 
         if (currentUserEmail == null) {
-            Log.e("ViewModelEditaPerfil", "Error: correu és null")
             _estat.value = EditaDadesEstat(
                 estaCarregant = false,
                 esErroni = true,
@@ -40,67 +37,32 @@ class ViewModelEditaPerfil : ViewModel() {
 
         _estat.value = EditaDadesEstat(estaCarregant = true)
 
-        FirebaseFirestore.getInstance().collection("Usuaris")
-            .whereEqualTo("correu", currentUserEmail)
-            .get()
-            .addOnSuccessListener { documents ->
-                val document = documents.firstOrNull()
-                if (document != null) {
-                    Log.d("ViewModelEditaPerfil", "Document trobat: ${document.id}")
-                    Log.d("ViewModelEditaPerfil", "Dades del document: ${document.data}")
-                    val rol = document.getString("rol")
-                    Log.d("ViewModelEditaPerfil", "Obtenint usuari amb rol: $rol")
-                    val usuari = when (rol) {
-                        "Estudiant" -> {
-                            Log.d("ViewModelEditaPerfil", "Deserialitzant com a Estudiant")
-                            document.toObject(Estudiant::class.java)
-                        }
-                        "Persona Gran" -> {
-                            Log.d("ViewModelEditaPerfil", "Deserialitzant com a Persona Gran")
-                            val personaGran = document.toObject(PersonaGran::class.java)
-                            Log.d("ViewModelEditaPerfil", "PersonaGran deserialitzada: $personaGran")
-                            personaGran
-                        }
-                        else -> {
-                            Log.d("ViewModelEditaPerfil", "Deserialitzant com a UsuariBase")
-                            document.toObject(UsuariBase::class.java)
-                        }
-                    }
-                    
-                    if (usuari != null) {
-                        Log.d("ViewModelEditaPerfil", "Usuari deserialitzat correctament: ${usuari.id}, ${usuari.rol}")
-                        if (usuari is PersonaGran) {
-                            Log.d("ViewModelEditaPerfil", "Detalls PersonaGran: ubicacio=${usuari.ubicacioAllotjament}, preu=${usuari.preuAllotjament}")
-                        }
+        viewModelScope.launch {
+            try {
+                val resultat = repositori.obtenUsuariPerCorreu(currentUserEmail)
+                when (resultat) {
+                    is Resposta.Exit -> {
                         _estat.value = EditaDadesEstat(
                             estaCarregant = false,
-                            dades = listOf(usuari)
+                            dades = listOf(resultat.dades)
                         )
-                    } else {
-                        Log.e("ViewModelEditaPerfil", "Error: usuari deserialitzat és null")
+                    }
+                    is Resposta.Fracas -> {
                         _estat.value = EditaDadesEstat(
                             estaCarregant = false,
                             esErroni = true,
-                            missatgeError = "Error al carregar les dades de l'usuari"
+                            missatgeError = resultat.missatgeError
                         )
                     }
-                } else {
-                    Log.e("ViewModelEditaPerfil", "Usuari no trobat amb correu: $currentUserEmail")
-                    _estat.value = EditaDadesEstat(
-                        estaCarregant = false,
-                        esErroni = true,
-                        missatgeError = "Usuari no trobat"
-                    )
                 }
-            }
-            .addOnFailureListener { e ->
-                Log.e("ViewModelEditaPerfil", "Error obtenint usuari: ${e.message}")
+            } catch (e: Exception) {
                 _estat.value = EditaDadesEstat(
                     estaCarregant = false,
                     esErroni = true,
                     missatgeError = "Error: ${e.message}"
                 )
             }
+        }
     }
 
     fun modificarDadesUsuari(usuari: UsuariBase) {

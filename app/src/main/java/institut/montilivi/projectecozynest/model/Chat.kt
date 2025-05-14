@@ -8,7 +8,7 @@ data class Chat(
     var idEstudiant: String = "",
     var idPersonaGran: String = "",
     var lastMessage: String = "",
-    val lastMessageSenderId: String? = null,
+    var lastMessageSenderId: String? = null,
     var timestamp: Timestamp? = null,
     var participants: List<String> = listOf()
 )

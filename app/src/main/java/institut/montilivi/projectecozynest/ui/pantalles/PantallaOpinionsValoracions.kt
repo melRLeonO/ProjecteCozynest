@@ -1,5 +1,6 @@
 package institut.montilivi.projectecozynest.ui.pantalles
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -55,6 +56,7 @@ fun PantallaOpinionsValoracions(navController: NavController, viewModelValoracio
     val estaCarregant by viewModelValoracions.estaCarregant.collectAsState()
 
     LaunchedEffect(usuari) {
+        Log.d("PantallaOpinionsValoracions", "Usuari seleccionat: $usuari")
         usuari?.let {
             viewModelValoracions.carregaValoracionsPerUsuari(it.id)
         }
@@ -209,6 +211,9 @@ fun PantallaOpinionsValoracions(navController: NavController, viewModelValoracio
                             val usuariActualLocal = usuariActual
 
                             if (usuariActualLocal != null && usuariValorat != null) {
+                                Log.d("PantallaOpinionsValoracions", "Usuari actual: $usuariActualLocal")
+                                Log.d("PantallaOpinionsValoracions", "Usuari valorat: $usuariValorat")
+
                                 viewModelValoracions.afegeixValoracio(
                                     idUsuariQueValora = usuariActualLocal.id,
                                     nomUsuariQueValora = usuariActualLocal.nom,

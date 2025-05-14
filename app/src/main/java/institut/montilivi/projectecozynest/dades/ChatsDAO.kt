@@ -11,4 +11,6 @@ interface ChatsDAO {
     suspend fun modificaChat(chat: Chat): Resposta<Boolean>
     suspend fun existeixChat(id: String): Resposta<Boolean>
     suspend fun obtenChat(id:String): Resposta<Chat>
+    suspend fun crearChat(estudiantId: String, personaGranId: String): Resposta<Boolean>
+    suspend fun eliminarChat(idChat: String): Resposta<Boolean>
 }

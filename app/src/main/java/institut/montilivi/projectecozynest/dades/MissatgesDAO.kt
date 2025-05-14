@@ -7,4 +7,5 @@ import kotlinx.coroutines.flow.Flow
 interface MissatgesDAO {
     suspend fun afegirMissatge(missatge: Missatge): Resposta<Boolean>
     suspend fun obtenMissatges(idChat: String): Flow<Resposta<List<Missatge>>>
+    suspend fun eliminarMissatgesChat(idChat: String): Resposta<Boolean>
 }
